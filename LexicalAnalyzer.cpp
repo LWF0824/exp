@@ -6,7 +6,8 @@ using namespace std;
 
 
 //保留字
-const string KeyWord[9] = { "PROGRAM","BEGIN","END","CONST","VAR","WHILE","DO","IF","THEN" };   
+// const string KeyWord[9] = { "PROGRAM","BEGIN","END","CONST","VAR","WHILE","DO","IF","THEN" };
+const string KeyWord[9] = { "BEGIN","CONST","DO","END","IF","PROGRAM","THEN","VAR","WHILE" };  
 
 
 int syn;  //单词种别码
@@ -170,11 +171,27 @@ bool IsDFAInput(char ch) // 判断是否为DFA的输入
 
 }
 
-void scan(string s, DFA dfa)    //扫描 在这里面使用DFA状态转移矩阵即可
+int binarySearch1(const string a[], int n , string target)//循环实现
 {
-	if (s[i] == ' ')
+	int low = 0 ,high = n , middle;
+	while(low < high)
 	{
-		syn = -2;
+	   middle = (low + high)/2;
+       if(target == a[middle])
+		   return middle;
+	   else if(target > a[middle])
+		   low = middle +1;
+	   else if(target < a[middle])
+		   high = middle;
+	}
+	return -1;
+};
+
+void scan(string p, DFA dfa_STM)    //扫描 使用DFA状态转移矩阵生成代码
+{
+	if (p[i] == ' ')	//空格，分割
+	{
+		syn = -2;	//判断为空格
 		i++;
 	}
 	else
@@ -182,44 +199,44 @@ void scan(string s, DFA dfa)    //扫描 在这里面使用DFA状态转移矩阵
 		token = "";   //清空当前字符串
 
 		// 判断首字符是否为DFA的输入
-		if(IsDFAInput(s[i]))
+		if(IsDFAInput(p[i]))
 		{
-		   //  1.判断字符是否为数字
-			if (IsDigit(s[i]))
+		   //  首选判断字符是否为数字
+			if (IsDigit(p[i]))
 			{
 				token = ""; //清空当前字符串
 				sum = 0;
-				while (IsDigit(s[i])) {
-					sum = sum * 10 + (s[i] - '0');
+				while (IsDigit(p[i])) {
+					sum = sum * 10 + (p[i] - '0');
 					i++;  //字符位置++
 					syn = 40;   //数字种别码为40
 				}
-				token += to_string(sum);     //骚操作，直接转化字符串
+				token += to_string(sum);
 				// 下一个字符不是数字也不是空格,#
-				if(!IsDigit(s[i])&&(s[i]!=' '&&s[i]!='#')){
+				if(!IsDigit(p[i])&&(p[i]!=' '&&p[i]!='#')){
 						syn = -1;
 						token = ""; 
 					}
 				
 			}
-			// 2.字符为字符串，表现为字母开头衔接任意个数字或字母
-			else if (IsLetter(s[i]))
+			// 字符为字符串，表现为字母开头衔接任意个数字或字母
+			else if (IsLetter(p[i]))
 			{
 
 				token = ""; //清空当前字符串
 				// 一直扫描，直到这个字符结束
 				int state = 1; //初态为1
-				while(IsDigit(s[i]) || IsLetter(s[i])){
-					if (IsLetter(s[i]))
+				while(IsDigit(p[i]) || IsLetter(p[i])){
+					if (IsLetter(p[i]))
 					{
-						state = dfa.trans[state][11]; // 状态转换，11代表letter
+						state = dfa_STM.trans[state][11]; // 状态转换，11代表letter
 					}
-					else if(IsDigit(s[i])){
-						state = dfa.trans[state][3]; // 状态转换，3代表d
+					else if(IsDigit(p[i])){
+						state = dfa_STM.trans[state][3]; // 状态转换，3代表digital
 					}else{
 						state = -1; //其他字符报错
 					}
-					token += s[i]; // 用token记住当前的字符串，用来判断是否是关键字
+					token += p[i]; // 用token记住当前的字符串，用来判断是否是关键字
 					i++;
 				}
 				
@@ -227,23 +244,19 @@ void scan(string s, DFA dfa)    //扫描 在这里面使用DFA状态转移矩阵
 				if(state == 0){
 					syn = 30;  // 如果是标识符，种别码为30
 					//如果是关键字，则用for循环将token与keyword比较找对应的种别码
-					for (int j = 0; j < 9; j++)
-					{
-						if (token == KeyWord[j])    //如果都是string类型，可以直接=相比较，若相等则返回1，否则为0
-						{
-							syn = j + 1;   //种别码从1开始所以要加1
-							break;
-						}
+					//采用二分查找，降低复杂度
+					if((binarySearch1(KeyWord,9,token)) != -1) {
+						syn = binarySearch1(KeyWord,9,token) + 1;
 					}
 				}else{
-					syn = -1; //出错
+					syn = -1; //错误
 				}
 			}
 		}
 		//判断为符号
 		else {
 			token = ""; //清空当前字符串
-			switch (s[i]) {
+			switch (p[i]) {
 			case'=':
 				syn = 15;
 				i++;
@@ -294,7 +307,7 @@ void scan(string s, DFA dfa)    //扫描 在这里面使用DFA状态转移矩阵
 
 			case':':
 				i++;
-				if(s[i] == '=')
+				if(p[i] == '=')
 				{
 					syn = 14;
 					token = ":=";
@@ -311,7 +324,7 @@ void scan(string s, DFA dfa)    //扫描 在这里面使用DFA状态转移矩阵
 				syn = 17;
 				i++;
 				token = ">";
-				if (s[i] == '=')
+				if ( p[i] == '=')
 				{
 					syn = 18;
 					i++;
@@ -323,13 +336,13 @@ void scan(string s, DFA dfa)    //扫描 在这里面使用DFA状态转移矩阵
 				syn = 19;
 				i++;
 				token = "<";
-				if (s[i] == '=')
+				if (p[i] == '=')
 				{
 					syn = 20;
 					i++;
 					token = "<=";
 				}
-				else if(s[i] == '>'){
+				else if(p[i] == '>'){
 					syn = 16;
 					i++;
 					token = "<>";
