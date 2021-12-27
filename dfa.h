@@ -15,75 +15,86 @@ typedef set<char> CharSet;
 
 /********************表达式转NFA********************/
 
-struct NfaState				//定义NFA状态
+struct NfaState				/*定义NFA状态*/
 {
 	
-	int index;				//NFA状态的状态号
+	int index;				/*NFA状态的状态号*/ 
 	
-	char input;				//NFA状态弧上的值
-	int chTrans;			//NFA状态弧转移到的状态号
+	char input;				/*NFA状态弧上的值*/
+	int chTrans;			/*NFA状态弧转移到的状态号*/ 
 	
-	IntSet epTrans;			//当前状态通过ε转移到的状态号集合
+	IntSet epTrans;			/*当前状态通过ε转移到的状态号集合*/ 
 };
 
 struct NFA
 {
 	
-	NfaState *head;			//NFA的头指针
-	NfaState *tail;			//NFA的尾指针
+	NfaState *head;			/*NFA的头指针*/
+	NfaState *tail;			/*NFA的尾指针*/
 };
 
-NfaState NfaStates[MAX];	//NFA状态数组
-int nfaStateNum = 0;		//NFA状态总数
+NfaState NfaStates[MAX];	/*NFA状态数组*/ 
+int nfaStateNum = 0;		/*NFA状态总数*/ 
 
-/*从状态1到状态2添加一条弧，弧上的值为ch*/
-void add(NfaState *state1, NfaState *state2, char ch)
+/*从状态n1到状态n2添加一条弧，弧上的值为ch*/
+void add(NfaState *n1, NfaState *n2, char ch)
 {
-	state1->input = ch;
-	state1->chTrans = state2->index;
+	
+	n1->input = ch;
+	n1->chTrans = n2->index;
 }
 
-/*从状态1到状态2添加一条弧，弧上的值为ε*/
-void add(NfaState *state1, NfaState *state2)
+/*从状态n1到状态n2添加一条弧，弧上的值为ε*/
+void add(NfaState *n1, NfaState *n2)
 {
-	state1->epTrans.insert(state2->index);
+	
+	n1->epTrans.insert(n2->index);
 }
 
 /*新建一个NFA（即从NFA状态数组中取出两个状态）*/
-NFA creatNFA(int n)
+NFA creatNFA(int sum)
 {
-	NFA nfa;
-	nfa.head = &NfaStates[n];
-	nfa.tail = &NfaStates[n + 1];
-	return nfa;
+	
+	NFA n;
+	
+	n.head = &NfaStates[sum];
+	n.tail = &NfaStates[sum + 1];
+
+	return n;
 }
 
-/*在字符串str第n位后面插入字符ch*/
-void insert(string &str, int n, char ch)
+/*在字符串s第n位后面插入字符ch*/
+void insert(string &s, int n, char ch)
 {
-	str += '#';
-	for(int i = str.size() - 1; i > n; i--)
+	
+	s += '#';
+	
+	for(int i = s.size() - 1; i > n; i--)
 	{
-		str[i] = str[i - 1];
+		s[i] = s[i - 1];
 	}
-	str[n] = ch;
+	
+	s[n] = ch;
 }
 
-/*对字符串s进行预处理，在第一位是操作数、‘*’或‘)’且第二位是操作数或‘(’之间加入和连接符‘&’*/ 
-void preprocess(string &str)
+/*对字符串s进行预处理，在第一位是操作数、‘*’或‘)’且第二位是操作数或‘(’之间加入连接符‘&’*/ 
+void preprocess(string &s)
 {
-	int len = str.size();
-	int i = 0;
-	while(i < len)
+	
+	int i = 0 , length = s.size();
+	
+	while(i < length)
 	{
-		if((str[i] == 'l') || (str[i] == 'd') || (str[i] == '*') || (str[i] == ')'))
+		if((s[i] >= 'a' && s[i] <= 'z') || (s[i] == '*') || (s[i] == ')'))
 		{
-			if((str[i + 1] == 'l') || (str[i + 1] == 'd') || str[i + 1] == '(')
+			if((s[i + 1] >= 'a' && s[i + 1] <= 'z') || s[i + 1] == '(')
 			{
-				insert(str, i+1 , '&');
-				len ++;
+			
+				insert(s, i+1 , '&');
+				length ++;
 			}
 		}
+
 		i++;
 	}
 } 
@@ -114,145 +125,171 @@ int priority(char ch)
 }
 
 /*中缀表达式转后缀表达式*/
-string infixToSuffix(string strIn)
+string infixToSuffix(string s)
 {
-	preprocess(strIn);		//对字符串进行预处理
-	stack<char> opera;			//运算符栈
-	string strOut;				//要输出的后缀字符串
-	for(int i = 0; i < strIn.size(); i++)
+	
+	preprocess(s);			/*对字符串进行预处理*/
+	
+	string str;				/*要输出的后缀字符串*/
+	stack<char> oper;		/*运算符栈*/
+	
+	for(int i = 0; i < s.size(); i++)
 	{
-		if(strIn[i] == 'l' || strIn[i] == 'd')	//*如果是操作数直接输出
+		
+		if(s[i] >= 'a' && s[i] <= 'z')	/*如果是操作数直接输出*/
 		{
-			strOut += strIn[i];
+			str += s[i];
 		} 
-		else							//遇到运算符时
+		else							/*遇到运算符时*/ 
 		{
-			if(strIn[i] == '(')			//遇到左括号压入栈中
+			
+			if(s[i] == '(')			/*遇到左括号压入栈中*/
 			{
-				opera.push(strIn[i]);
-			}
-			else if(strIn[i] == ')')	//遇到右括号时
+				oper.push(s[i]);
+			} 
+			
+			else if(s[i] == ')')	/*遇到右括号时*/
 			{
-				char ch = opera.top();
-				while(ch != '(')		//将栈中元素出栈，直到栈顶为左括号
+					
+				char ch = oper.top();
+				while(ch != '(')		/*将栈中元素出栈，直到栈顶为左括号*/
 				{
-					strOut += ch;
-					opera.pop();
-					ch = opera.top();
+					
+					str += ch;
+				
+					oper.pop();
+					ch = oper.top();
 				}
-				opera.pop();				//最后将左括号出栈
+				
+				oper.pop();				/*最后将左括号出栈*/ 
 			}
-			else					//遇到其他操作符时
+			else					/*遇到其他操作符时*/ 
 			{
-				if(!opera.empty())			//如果栈不为空
+				
+				if(!oper.empty())			/*如果栈不为空*/ 
 				{
-					char ch = opera.top();
-					while(priority(ch) >= priority(strIn[i]))	//弹出栈中优先级大于等于当前运算符的运算符
+					
+					char ch = oper.top();
+					while(priority(ch) >= priority(s[i]))	/*弹出栈中优先级大于等于当前运算符的运算符*/ 
 					{
-						strOut +=	ch;
-						opera.pop();
-						if(opera.empty())	//如果栈为空则结束循环
+						
+						str +=	ch;
+						oper.pop();
+						
+						if(oper.empty())	/*如果栈为空则结束循环*/ 
 						{
 							break;
 						} 								
-						else ch = opera.top();
-					}
-					opera.push(strIn[i]);		//再将当前运算符入栈
+						else ch = oper.top();
+					} 
+
+					oper.push(s[i]);		/*再将当前运算符入栈*/ 
 				}
-				else				//如果栈为空，直接将运算符入栈
+				
+				else				/*如果栈为空，直接将运算符入栈*/
 				{
-					opera.push(strIn[i]);
+					oper.push(s[i]);
 				}
 			}
 		}
 	}
+	
 	/*最后如果栈不为空，则出栈并输出到字符串*/
-	while(!opera.empty())
+	while(!oper.empty())
 	{
-		char ch = opera.top();
-		opera.pop();
-		strOut += ch;
+		
+		char ch = oper.top();
+		oper.pop();
+		
+		str += ch;
 	}
-	// cout<<"*******************************************"<<endl<<endl;
-	// cout<<"中缀表达式为："<<strIn<<endl<<endl; 
-	// cout<<"后缀表达式为："<<strOut<<endl<<endl;
-	return strOut;
+	
+	cout<<"*******************************************"<<endl<<endl;
+	// cout<<"中缀表达式为："<<s<<endl<<endl; 
+	// cout<<"后缀表达式为："<<str<<endl<<endl;
+
+	return str;
 } 
 
 /*后缀表达式转nfa*/
-NFA strToNfa(string str)
+NFA strToNfa(string s)
 {
 	
-	stack<NFA> NFAStack;		//定义一个NFA栈
+	stack<NFA> NfaStack;		/*定义一个NFA栈*/ 
 	
-	for(int i = 0; i < str.size(); i++)		//读取后缀表达式，每次读一个字符
+	for(int i = 0; i < s.size(); i++)		/*读取后缀表达式，每次读一个字符*/ 
 	{
 
-		if(str[i] == 'l' || str[i] == 'd')		//遇到操作数
+		if(s[i] >= 'a' && s[i] <= 'z')		/*遇到操作数*/ 
 		{
 			
-			NFA nfa = creatNFA(nfaStateNum);		//新建一个NFA
-			nfaStateNum += 2;					//NFA状态总数加2
+			NFA n = creatNFA(nfaStateNum);		/*新建一个NFA*/ 
+			nfaStateNum += 2;					/*NFA状态总数加2*/
 			
-			add(nfa.head, nfa.tail, str[i]);			//NFA的头指向尾，弧上的值为str[i]
+			add(n.head, n.tail, s[i]);			/*NFA的头指向尾，弧上的值为s[i]*/
 
-			NFAStack.push(nfa);					//将该NFA入栈
+			NfaStack.push(n);					/*将该NFA入栈*/
 		}
 		
-		else if(str[i] == '*')		//遇到闭包运算符
+		else if(s[i] == '*')		/*遇到闭包运算符*/
 		{
 			
-			NFA nfa1 = creatNFA(nfaStateNum);		//新建一个NFA
-			nfaStateNum += 2;					//NFA状态总数加2
+			NFA n1 = creatNFA(nfaStateNum);		/*新建一个NFA*/
+			nfaStateNum += 2;					/*NFA状态总数加2*/
 
-			NFA nfa2 = NFAStack.top();			//从栈中弹出一个NFA
-			NFAStack.pop();
+			NFA n2 = NfaStack.top();			/*从栈中弹出一个NFA*/
+			NfaStack.pop();
 			
-			add(nfa2.tail, nfa2.head);				//nfa2的尾通过ε指向nfa2的头
-			add(nfa2.tail, nfa1.tail);				//nfa2的尾通过ε指向nfa1的尾
-			add(nfa1.head, nfa2.head);				//nfa1的头通过ε指向nfa2的头
-			add(nfa1.head, nfa1.tail);				//nfa1的头通过ε指向nfa1的尾
+			add(n2.tail, n1.head);				/*n2的尾通过ε指向n1的头*/
+			add(n2.tail, n1.tail);				/*n2的尾通过ε指向n1的尾*/
+			add(n1.head, n2.head);				/*n1的头通过ε指向n2的头*/
+			add(n1.head, n1.tail);				/*n1的头通过ε指向n1的尾*/
 			
-			NFAStack.push(nfa1);					//最后将新生成的NFA入栈
+			NfaStack.push(n1);					/*最后将新生成的NFA入栈*/
 		}
 		
-		else if(str[i] == '|')		//遇到或运算符
+		else if(s[i] == '|')		/*遇到或运算符*/
 		{
-			NFA nfa = creatNFA(nfaStateNum);		//新建一个NFA
-			nfaStateNum +=2;					//NFA状态总数加2
-
-			NFA nfa1, nfa2;							//从栈中弹出两个NFA，栈顶为n2，次栈顶为n1
-			nfa2 = NFAStack.top();
-			NFAStack.pop();
 			
-			nfa1 = NFAStack.top();
-			NFAStack.pop();
-
-			add(nfa.head, nfa1.head);				//nfa的头通过ε指向nfa1的头
-			add(nfa.head, nfa2.head);				//nfa的头通过ε指向nfa2的头
-			add(nfa1.tail, nfa.tail);				//nfa1的尾通过ε指向nfa的尾
-			add(nfa2.tail, nfa.tail);				//nfa2的尾通过ε指向nfa的尾
+			NFA n1, n2;							/*从栈中弹出两个NFA，栈顶为n2，次栈顶为n1*/
+			n2 = NfaStack.top();
+			NfaStack.pop();
 			
-			NFAStack.push(nfa);					//最后将新生成的NFA入栈
+			n1 = NfaStack.top();
+			NfaStack.pop();
+			
+			NFA n = creatNFA(nfaStateNum);		/*新建一个NFA*/
+			nfaStateNum +=2;					/*NFA状态总数加2*/
+
+			add(n.head, n1.head);				/*n的头通过ε指向n1的头*/
+			add(n.head, n2.head);				/*n的头通过ε指向n2的头*/	
+			add(n1.tail, n.tail);				/*n1的尾通过ε指向n的尾*/
+			add(n2.tail, n.tail);				/*n2的尾通过ε指向n的尾*/
+			
+			NfaStack.push(n);					/*最后将新生成的NFA入栈*/
 		}
 		
-		else if(str[i] == '&')		//遇到连接运算符
+		else if(s[i] == '&')		/*遇到连接运算符*/
 		{
-			NFA nfa;								//定义一个新的NFA nfa
-
-			NFA nfa1, nfa2;					//从栈中弹出两个NFA，栈顶为nfa2，次栈顶为nfa1
-			nfa2 = NFAStack.top();
-			NFAStack.pop();
-			nfa1 = NFAStack.top();
-			NFAStack.pop();
 			
-			add(nfa1.tail, nfa2.head);		//nfa1的尾通过ε指向nfa2的尾
-			nfa.head = nfa1.head;					//nfa的头为nfa1的头
-			nfa.tail = nfa2.tail;					//nfa的尾为nfa2的尾
-			NFAStack.push(nfa);					//最后将新生成的NFA入栈
+			NFA n1, n2, n;				/*定义一个新的NFA n*/
+			
+			n2 = NfaStack.top();				/*从栈中弹出两个NFA，栈顶为n2，次栈顶为n1*/
+			NfaStack.pop();
+			
+			n1 = NfaStack.top();
+			NfaStack.pop();
+			
+			add(n1.tail, n2.head);				/*n1的尾通过ε指向n2的尾*/
+			
+			n.head = n1.head;					/*n的头为n1的头*/
+			n.tail = n2.tail;					/*n的尾为n2的尾*/
+
+			NfaStack.push(n);					/*最后将新生成的NFA入栈*/
 		}
 	}
-	return NFAStack.top();		//最后的栈顶元素即为生成好的NFA
+	
+	return NfaStack.top();		/*最后的栈顶元素即为生成好的NFA*/
 }
 
 /*打印NFA函数*/
@@ -262,74 +299,31 @@ void printNFA(NFA nfa)
 	cout<<"***************     NFA     ***************"<<endl<<endl; 
 	cout<<"NFA:"<<nfaStateNum<<"state,"<<endl;
 	cout<<"start:"<<nfa.head->index<<",terminal:" <<nfa.tail->index<<"."<<endl<<endl<<"shift:"<<endl;
-
-	string** nfaArray = new string* [nfaStateNum]; //初始化NFA状态转移矩阵
-	string str;
-	for(int i=0;i<nfaStateNum;i++){
-		nfaArray[i]=new string[3];
-		for(int j=0;j<3;j++) {
-			nfaArray[i][j]=' ';
-		}
-	}
 	
-	for(int i = 0; i < nfaStateNum; i++)		//遍历NFA状态数组
+	for(int i = 0; i < nfaStateNum; i++)		/*遍历NFA状态数组*/
 	{
 		
-		if(NfaStates[i].input != '#')			//如果弧上的值不是初始时的‘#’则输出
+		if(NfaStates[i].input != '#')			/*如果弧上的值不是初始时的‘#’则输出*/
 		{
 			cout<<NfaStates[i].index<<"-->'"<<NfaStates[i].input<<"'-->"<<NfaStates[i].chTrans<<'\t';
-
-			if (NfaStates[i].input=='l') 		//为状态转移矩阵赋值
-			{
-				nfaArray[NfaStates[i].index][0]=NfaStates[i].chTrans+48;
-			} 
-			else if (NfaStates[i].input=='d') 
-			{
-				nfaArray[NfaStates[i].index][1]=NfaStates[i].chTrans+48;
-			}
 		}
 		
-		IntSet::iterator it;					//输出该状态经过ε到达的状态
+		IntSet::iterator it;					/*输出该状态经过ε到达的状态*/
 		for(it = NfaStates[i].epTrans.begin(); it != NfaStates[i].epTrans.end(); it++)
 		{
 			cout<<NfaStates[i].index<<"-->'"<<' '<<"'-->"<<*it<<'\t';
-
-			str=*it+48;
-			if(nfaArray[NfaStates[i].index][2]==" ") 		//为状态转移矩阵赋值
-			{
-				nfaArray[NfaStates[i].index][2]=str;
-			} 
-			else 
-			{
-				nfaArray[NfaStates[i].index][2]=nfaArray[NfaStates[i].index][2]+','+str;
-			}
 		}
 		
 		cout<<endl;
 	}
-
-	/*打印NFA状态转换矩阵*/
-	cout<<endl<<"NFA shift matrix："<<endl;
-	cout<<' '<<'\t'<<" l \t d \t ε"<<endl;
-	for(int i=0;i<nfaStateNum;i++)
-	{
-		cout<<i<<'\t';
-		for(int j=0;j<3;j++) 
-		{
-			cout<<"{"<<nfaArray[i][j]<<"}"<<'\t';
-		}
-		cout<<endl;
-	}
-	cout<<endl;
 }
 
 /********************NFA转DFA********************/
 
 struct Edge			/*定义DFA的转换弧*/
 {
-	
-	char input;			/*弧上的值*/
-	int Trans;			/*弧所指向的状态号*/
+	char input;			/*弧上的值，也即输入什么转换到下一状态*/
+	int Trans;			/*弧所指向的下一状态的状态号*/
 };
 
 struct DfaState		/*定义DFA状态*/
@@ -340,8 +334,8 @@ struct DfaState		/*定义DFA状态*/
 	int index;			/*DFA状态的状态号*/
 	IntSet closure;		/*NFA的ε-move()闭包*/
 	
-	int edgeNum;		/*DFA状态上的射出弧数*/
-	Edge Edges[10];		/*DFA状态上的射出弧*/
+	int edgeNum;		/*DFA状态上射出弧的数目*/
+	Edge Edges[10];		/*DFA状态上的射出弧们*/
 };
 
 DfaState DfaStates[MAX];		/*DFA状态数组*/
@@ -359,22 +353,22 @@ struct DFA			/*定义DFA结构*/
 };
 
 /*求一个状态集的ε-cloure*/
-IntSet epcloure(IntSet s)
+IntSet theepcloure(IntSet s)
 {
 	
-	stack<int> epStack;		/*(此处栈和队列均可)*/
+	stack<int> theepStack;		/*栈和队列均可，此处使用栈*/
 	
 	IntSet::iterator it;
 	for(it = s.begin(); it != s.end(); it++)
 	{
-		epStack.push(*it);			/*将该状态集中的每一个元素都压入栈中*/
+		theepStack.push(*it);			/*将该状态集中的每一个元素都压入栈中*/
 	}
 	
-	while(!epStack.empty())			/*只要栈不为空*/
+	while(!theepStack.empty())			/*栈不为空时*/
 	{
 		
-		int temp = epStack.top();		/*从栈中弹出一个元素*/
-		epStack.pop();
+		int temp = theepStack.top();		/*从栈中弹出一个元素*/
+		theepStack.pop();
 		
 		IntSet::iterator iter;
 		for(iter = NfaStates[temp].epTrans.begin(); iter != NfaStates[temp].epTrans.end(); iter++)
@@ -382,7 +376,7 @@ IntSet epcloure(IntSet s)
 			if(!s.count(*iter))				/*遍历它通过ε能转换到的状态集*/
 			{								/*如果当前元素没有在集合中出现*/
 				s.insert(*iter);			/*则把它加入集合中*/
-				epStack.push(*iter);		/*同时压入栈中*/
+				theepStack.push(*iter);		/*同时压入栈中*/
 			}
 		}
 	}
@@ -391,7 +385,7 @@ IntSet epcloure(IntSet s)
 }
 
 /*求一个状态集s的ε-cloure(move(ch))*/
-IntSet moveEpCloure(IntSet s, char ch)
+IntSet movetheEpCloure(IntSet s, char ch)
 {
 	
 	IntSet temp;
@@ -405,7 +399,7 @@ IntSet moveEpCloure(IntSet s, char ch)
 		}
 	}
 	
-	temp = epcloure(temp);			/*最后求temp的ε闭包*/
+	temp = theepcloure(temp);			/*最后求temp的ε闭包*/
 	return temp;
 }
 
@@ -450,7 +444,7 @@ DFA nfaToDfa(NFA n, string str)		/*参数为nfa和后缀表达式*/
 	IntSet tempSet;
 	tempSet.insert(n.head->index);		/*将nfa的初态加入到集合中*/
 	
-	DfaStates[0].closure = epcloure(tempSet);		/*求dfa的初态*/
+	DfaStates[0].closure = theepcloure(tempSet);		/*求dfa的初态*/
 	DfaStates[0].isEnd = IsEnd(n, DfaStates[0].closure);		/*判断初态是否为终态*/
 	
 	dfaStateNum++;			/*dfa数量加一*/
@@ -461,21 +455,15 @@ DFA nfaToDfa(NFA n, string str)		/*参数为nfa和后缀表达式*/
 	while(!q.empty())		/*只要队列不为空，就一直循环*/
 	{
 		
-		int num = q.front();				/*出去队首元素*/
+		int num = q.front();				/*队首元素出队列*/
 		q.pop();
 		
 		CharSet::iterator it;
 		for(it = d.terminator.begin(); it != d.terminator.end(); it++)		/*遍历终结符集*/
 		{
 			
-			IntSet temp = moveEpCloure(DfaStates[num].closure, *it);		/*计算每个终结符的ε-cloure(move(ch))*/
-			/*IntSet::iterator t;
-			cout<<endl;
-			for(t = temp.begin(); t != temp.end(); t++)   打印每次划分 
-			{
-				cout<<*t<<' ';
-			}
-			cout<<endl;*/
+			IntSet temp = movetheEpCloure(DfaStates[num].closure, *it);		/*计算每个终结符的ε-cloure(move(ch))*/
+
 			if(!states.count(temp) && !temp.empty())	/*如果求出来的状态集不为空且与之前求出来的状态集不同，则新建一个DFA状态*/
 			{
 				
@@ -919,6 +907,5 @@ void printMinDFA(DFA d)
 	}
 	cout<<endl<<"*******************************************"<<endl;
 }
-
 
 
