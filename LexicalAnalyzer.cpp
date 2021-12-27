@@ -33,7 +33,7 @@ bool IsDFAInpit(char ch);
 DFA generateDFA(){
 // 生成DFA
 	string str = "l(l|d)*";
-	str = infixToSuffix(str);		/*将中缀表达式转换为后缀表达式*/
+	str = infixToSuffix(str);		//将中缀表达式转换为后缀表达式
 
 	/***初始化所有的数组***/
 	int i, j;
@@ -212,8 +212,8 @@ void scan(string p, DFA dfa_STM)    //扫描 使用DFA状态转移矩阵生成�
 					syn = 40;   //数字种别码为40
 				}
 				token += to_string(sum);
-				// 下一个字符不是数字也不是空格,#
-				if(!IsDigit(p[i])&&(p[i]!=' '&&p[i]!='#')){
+				// // 下一个字符不是数字也不是空格,#
+				if(IsLetter(p[i])){
 						syn = -1;
 						token = ""; 
 					}
@@ -360,5 +360,6 @@ void scan(string p, DFA dfa_STM)    //扫描 使用DFA状态转移矩阵生成�
 		}
 	}
 	        
+				
 		
 }
